@@ -10,6 +10,9 @@ import java.lang.annotation.Annotation;
 @Component
 public class MyServiceImpl {
 
+    static {
+        System.out.println("inside MyServiceImpl");
+    }
     @Visualise(reqId = 123)
     public void doSomething(int a) throws Exception {
         System.out.println("Inside service");

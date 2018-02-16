@@ -1,5 +1,6 @@
 package visualise;
 
+import kafka.VisualizationProducer;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
@@ -8,6 +9,10 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -17,26 +22,29 @@ import java.util.Arrays;
 @Component
 public class VisualiseAspect {
 
+    @Autowired
+    @Qualifier("visualizationProducer")
+    private VisualizationProducer visualizationProducer;
+
+    private String topic = "maas360.ios.visualization.topic";
+
     @Before("execution(* *(..)) && @annotation(Visualise)")
     public void beforeMethod(JoinPoint joinPoint) {
         System.out.println("before method");
     }
 
-    //    @Around("execution(* visualise.*.*(..)) && @annotation(Visualise)")
-//    @Around("annotationPointCutDefinition(visualise) && atExecution()")
     @Around("@annotation(visualise) && execution(* *(..))")
     public Object log(ProceedingJoinPoint joinPoint, Visualise visualise) throws Throwable {
         System.out.println("Inside logDuration");
         long start = System.currentTimeMillis();
-
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-
         Method method = signature.getMethod();
         joinPoint.proceed();
         long elapsedTime = System.currentTimeMillis() - start;
         System.out.println("Method execution time: " + elapsedTime + " mili second." + "\n\n");
         String methodName = method.getName();
         System.out.println("method name is " + methodName);
+        visualizationProducer.visualize(topic, "cdjhvjkfdvjkfdnvjkfnbjkfnbjknfjbnfjbnvfjbnjkfnbkjfgnbjfnvjwdfjvefmnvndfvefbvhjenv dfvfejvndfknvjfdnvjfnjrevdfnvjnfjknfjnrejnwdjnvjdnvjfbjfnbjrngjregjebjerbgjrebgjlrebjnerjgberjgrejgbjrngjrebgjrebgjengjkrengjrejknregnerjbfejvnjdfvnjdfnbjkfngjkengkren");
         return method;
     }
 
