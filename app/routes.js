@@ -1,54 +1,54 @@
 var Todo = require('./models/todo');
 
-function getTodos(res) {
-    Todo.find(function (err, todos) {
+var MongoClient = require('mongodb').MongoClient;
+var assert = require('assert');
+var ObjectId = require('mongodb').ObjectID;
+var url = 'mongodb://localhost:27017/workflow';
 
-        // if there is an error retrieving, send the error. nothing after res.send(err) will execute
-        if (err) {
-            res.send(err);
-        }
+var insertDocument = function(db, collection_name, data, callback) {
+   db.collection(collection_name).insertOne( data, function(err, result) {
+    assert.equal(err, null);
+    callback();
+  });
+};
 
-        res.json(todos); // return all todos in JSON format
-    });
+var getAllDocuments = function(db, collection_name, callback) {
+   var result = [];
+   var cursor =db.collection(collection_name).find( );
+   cursor.each(function(err, doc) {
+      assert.equal(err, null);
+      if (doc != null) {
+         result.push(doc);
+      } else {
+         callback(result);
+      }
+   });
 };
 
 module.exports = function (app) {
 
-    // api ---------------------------------------------------------------------
-    // get all todos
-    app.get('/api/todos', function (req, res) {
-        // use mongoose to get all todos in the database
-        getTodos(res);
-    });
-
-    // create todo and send back all todos after creation
-    app.post('/api/todos', function (req, res) {
-
-        // create a todo, information comes from AJAX request from Angular
-        Todo.create({
-            text: req.body.text,
-            done: false
-        }, function (err, todo) {
-            if (err)
-                res.send(err);
-
-            // get and return all the todos after you create another
-            getTodos(res);
-        });
-
-    });
-
-    // delete a todo
-    app.delete('/api/todos/:todo_id', function (req, res) {
-        Todo.remove({
-            _id: req.params.todo_id
-        }, function (err, todo) {
-            if (err)
-                res.send(err);
-
-            getTodos(res);
+    app.get('/api/getJobs', function (req, res) {
+        MongoClient.connect(url, function(err, db) {
+          assert.equal(null, err);
+          getAllDocuments(db,'workflow_data', function(result) {
+              db.close();
+              res.json(result);
+          });
         });
     });
+
+    app.post('/api/workflow_template', function (req, res) {
+        MongoClient.connect(url, function(err, db) {
+          assert.equal(null, err);
+          var data = req.body;
+          insertDocument(db,'workflow_template', data, function() {
+              db.close();
+              res.json({'status': 'success'});
+          });
+        });
+    });
+
+
 
     // application -------------------------------------------------------------
     app.get('*', function (req, res) {
