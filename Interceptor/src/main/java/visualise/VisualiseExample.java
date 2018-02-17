@@ -30,7 +30,7 @@ public class VisualiseExample {
         myService = context.getBean(MyServiceImpl.class);
         myService2 = context.getBean(MyServiceImpl2.class);
         VisualizationProducer visualizationProducer = context.getBean(VisualizationProducer.class);
-        visualizationProducer.visualize(topic, "abc");
+//        visualizationProducer.visualize(topic, "abc");
         method1();
         myService.doSomething(5, 10);
         myService2.print();
