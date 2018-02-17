@@ -9,14 +9,12 @@ import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
-import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -52,6 +50,7 @@ public class VisualiseAspect {
         VisualizationPayload visualizationPayload = new VisualizationPayload(reqId, visualise.workFlowName(), visualise.stage());
         visualizationPayload.setStatus("SUCCESS");
         visualizationPayload.setTimeRequired(elapsedTime);
+        visualizationPayload.setTimestamp(new Timestamp(startTime).getTime());
         String message = JSONConverter.toJSON(visualizationPayload, VisualizationPayload.class);
         visualizationProducer.visualize(topic, message);
         return visualizationPayload;
@@ -59,6 +58,7 @@ public class VisualiseAspect {
 
     @AfterThrowing(value = "@annotation(visualise) && execution(* *(..))", throwing = "e")
     public void fetchError(JoinPoint joinPoint, Throwable e, Visualise visualise) {
+        Long startTime = System.currentTimeMillis();
         String reqId = threadLocal.get();
         Signature signature = joinPoint.getSignature();
         String methodName = signature.getName();
@@ -75,7 +75,9 @@ public class VisualiseAspect {
         }
         visualizationPayload.setErrorStack(sb.toString());
         visualizationPayload.setMessage(e.getMessage());
+        visualizationPayload.setTimestamp(new Timestamp(startTime).getTime());
         String message = JSONConverter.toJSON(visualizationPayload, VisualizationPayload.class);
+
         visualizationProducer.visualize(topic, message);
     }
 }

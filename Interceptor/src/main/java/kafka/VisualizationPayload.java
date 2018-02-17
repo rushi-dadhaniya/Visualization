@@ -18,6 +18,8 @@ public class VisualizationPayload {
 
     private String errorStack;
 
+    private Long timestamp;
+
     public VisualizationPayload(String reqId, String workflowName, String stage) {
         this.workflowName = workflowName;
         this.stage = stage;
@@ -88,4 +90,11 @@ public class VisualizationPayload {
         this.errorStack = errorStack;
     }
 
+    public Long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(Long timestamp) {
+        this.timestamp = timestamp;
+    }
 }
