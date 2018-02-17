@@ -1,5 +1,7 @@
 package visualise;
 
+import kafka.JSONConverter;
+import kafka.VisualizationPayload;
 import kafka.VisualizationProducer;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -10,13 +12,13 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.UUID;
 
 @Aspect
 @Component
@@ -26,34 +28,54 @@ public class VisualiseAspect {
     @Qualifier("visualizationProducer")
     private VisualizationProducer visualizationProducer;
 
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
     private String topic = "maas360.ios.visualization.topic";
 
-    @Before("execution(* *(..)) && @annotation(Visualise)")
-    public void beforeMethod(JoinPoint joinPoint) {
-        System.out.println("before method");
-    }
+    private ThreadLocal<String> threadLocal;
 
     @Around("@annotation(visualise) && execution(* *(..))")
     public Object log(ProceedingJoinPoint joinPoint, Visualise visualise) throws Throwable {
-        System.out.println("Inside logDuration");
-        long start = System.currentTimeMillis();
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = signature.getMethod();
+        String reqId = null;
+        if(threadLocal != null) {
+            reqId = threadLocal.get();
+        }
+        else {
+            threadLocal = new ThreadLocal<>();
+            reqId = UUID.randomUUID().toString();
+            threadLocal.set(reqId);
+        }
+        Long startTime = System.currentTimeMillis();
         joinPoint.proceed();
-        long elapsedTime = System.currentTimeMillis() - start;
-        System.out.println("Method execution time: " + elapsedTime + " mili second." + "\n\n");
-        String methodName = method.getName();
-        System.out.println("method name is " + methodName);
-        visualizationProducer.visualize(topic, "cdjhvjkfdvjkfdnvjkfnbjkfnbjknfjbnfjbnvfjbnjkfnbkjfgnbjfnvjwdfjvefmnvndfvefbvhjenv dfvfejvndfknvjfdnvjfnjrevdfnvjnfjknfjnrejnwdjnvjdnvjfbjfnbjrngjregjebjerbgjrebgjlrebjnerjgberjgrejgbjrngjrebgjrebgjengjkrengjrejknregnerjbfejvnjdfvnjdfnbjkfngjkengkren");
-        return method;
+        Long elapsedTime = System.currentTimeMillis() - startTime;
+        VisualizationPayload visualizationPayload = new VisualizationPayload(reqId, visualise.workFlowName(), visualise.stage());
+        visualizationPayload.setStatus("SUCCESS");
+        visualizationPayload.setTimeRequired(elapsedTime);
+        String message = JSONConverter.toJSON(visualizationPayload, VisualizationPayload.class);
+        visualizationProducer.visualize(topic, message);
+        return visualizationPayload;
     }
 
-    @AfterThrowing(value = "execution(* *.*(..))", throwing = "e")
-    public void fetchError(JoinPoint joinPoint, Throwable e) {
+    @AfterThrowing(value = "@annotation(visualise) && execution(* *(..))", throwing = "e")
+    public void fetchError(JoinPoint joinPoint, Throwable e, Visualise visualise) {
+        String reqId = threadLocal.get();
         Signature signature = joinPoint.getSignature();
         String methodName = signature.getName();
         String stuff = signature.toString();
         String arguments = Arrays.toString(joinPoint.getArgs());
         System.out.println("We have caught exception in method: " + methodName + " with arguments " + arguments + " and the full toString: " + stuff + "the exception is: " + e.getMessage() + " " + e);
+        VisualizationPayload visualizationPayload = new VisualizationPayload(reqId, visualise.workFlowName(), visualise.stage());
+        visualizationPayload.setStatus("FAILED");
+        visualizationPayload.setMethodArgs(arguments);
+        StringBuilder sb = new StringBuilder();
+        for (StackTraceElement element : e.getStackTrace()) {
+            sb.append(element.toString());
+            sb.append("\n");
+        }
+        visualizationPayload.setErrorStack(sb.toString());
+        visualizationPayload.setMessage(e.getMessage());
+        String message = JSONConverter.toJSON(visualizationPayload, VisualizationPayload.class);
+        visualizationProducer.visualize(topic, message);
     }
 }

@@ -2,30 +2,34 @@ package kafka;
 
 public class VisualizationPayload {
 
-	private Long orgId;
-
-    private Long contextId;
-
     private String status;
 
     private String workflowName;
 
-    private String topic;
-
-    private String jobId;
+    private String stage;
 
     private String message;
     
-    private Long reqId;
+    private String reqId;
 
-    private String displayText;
-    
-    public Long getReqId() {
+    private Long timeRequired;
+
+    private String methodArgs;
+
+    private String errorStack;
+
+    public VisualizationPayload(String reqId, String workflowName, String stage) {
+        this.workflowName = workflowName;
+        this.stage = stage;
+        this.reqId = reqId;
+    }
+
+    public String getReqId() {
         return reqId;
     }
 
-    public void setReqId(Long eventId) {
-        this.reqId = eventId;
+    public void setReqId(String reqId) {
+        this.reqId = reqId;
     }
 
     public String getMessage() {
@@ -37,27 +41,11 @@ public class VisualizationPayload {
     }
 
     public String getJobId() {
-        return jobId;
+        return stage;
     }
 
-    public void setJobId(String jobId) {
-        this.jobId = jobId;
-    }
-
-    public Long getOrgId() {
-        return orgId;
-    }
-
-    public void setOrgId(Long orgId) {
-        this.orgId = orgId;
-    }
-
-    public Long getContextId() {
-        return contextId;
-    }
-
-    public void setContextId(Long contextId) {
-        this.contextId = contextId;
+    public void setStage(String stage) {
+        this.stage = stage;
     }
 
     public String getStatus() {
@@ -76,19 +64,28 @@ public class VisualizationPayload {
         this.workflowName = workflowName;
     }
 
-    public String getTopic() {
-        return topic;
+    public Long getTimeRequired() {
+        return timeRequired;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public void setTimeRequired(Long timeRequired) {
+        this.timeRequired = timeRequired;
     }
 
-	public String getDisplayText() {
-		return displayText;
-	}
+    public String getMethodArgs() {
+        return methodArgs;
+    }
 
-	public void setDisplayText(String displayText) {
-		this.displayText = displayText;
-	}
+    public void setMethodArgs(String methodArgs) {
+        this.methodArgs = methodArgs;
+    }
+
+    public String getErrorStack() {
+        return errorStack;
+    }
+
+    public void setErrorStack(String errorStack) {
+        this.errorStack = errorStack;
+    }
+
 }

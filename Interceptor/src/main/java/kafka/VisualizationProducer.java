@@ -17,23 +17,9 @@ public class VisualizationProducer {
 	@Autowired
 	private KafkaTemplate<String, String> kafkaTemplate;
 
-//	private String topic = "maas360.ios.visualization.topic";
+	private String topic = "maas360.ios.visualization.topic";
 
 	public void visualize(String topic, String message) {
 		kafkaTemplate.send(topic, message);
-//		ListenableFuture<SendResult<String, String>> future = kafkaTemplate.send(topic, message);
-//		future.addCallback(new ListenableFutureCallback<SendResult<String, String>>() {
-//
-//			@Override
-//			public void onSuccess(SendResult<String, String> result) {
-//				LOGGER.info("sent message='{}' with offset={}", message, result.getRecordMetadata().offset());
-//			}
-//
-//			@Override
-//			public void onFailure(Throwable ex) {
-//				LOGGER.error("unable to send message='{}'", message, ex);
-//			}
-//		});
-
 	}
 }
