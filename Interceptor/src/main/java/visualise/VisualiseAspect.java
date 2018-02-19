@@ -6,9 +6,7 @@ import kafka.VisualizationProducer;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
-import org.aspectj.lang.annotation.AfterThrowing;
-import org.aspectj.lang.annotation.Around;
-import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -33,7 +31,15 @@ public class VisualiseAspect {
 
     private ThreadLocal<String> threadLocal;
 
-    @Around("@annotation(visualise) && execution(* *(..))")
+    @Before("@annotation(Visualise) && execution(* *(..))")
+    public void logBeforeAllMethods(JoinPoint joinPoint) {
+        System.out.println("xxxxxxxxxxxxxx");
+    }
+
+    @Pointcut("@annotation(Visualise) && execution(* *(..))")
+    public void businessMethods() {}
+
+    @Around("@annotation(visualise)")
     public Object log(ProceedingJoinPoint joinPoint, Visualise visualise) throws Throwable {
         String reqId = null;
         if(threadLocal != null) {
